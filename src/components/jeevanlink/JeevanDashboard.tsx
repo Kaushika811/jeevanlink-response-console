@@ -7,7 +7,6 @@ import {
   ChevronRight,
   CircleDot,
   Copy,
-  Cross,
   Droplets,
   Filter,
   HeartPulse,
@@ -23,7 +22,6 @@ import {
   Settings,
   ShieldAlert,
   Siren,
-  SlidersHorizontal,
   TentTree,
   TriangleAlert,
   UserRound,
@@ -250,7 +248,7 @@ function SectionHeading({ title, subtitle, action }: { title: string; subtitle: 
   );
 }
 
-function IncidentMap({ incidents, selectedId, onSelect, expanded = false }: { incidents: Incident[]; selectedId?: string; onSelect: (incident: Incident) => void; expanded?: boolean }) {
+function IncidentMap({ incidents, selectedId, onSelect, expanded = false }: { incidents: Incident[]; selectedId: string | undefined; onSelect: (incident: Incident) => void; expanded?: boolean }) {
   const [zoom, setZoom] = useState(1);
   const [showResolved, setShowResolved] = useState(true);
   const visible = showResolved ? incidents : incidents.filter((i) => i.status !== "RESOLVED");
@@ -404,7 +402,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
   return <div className="detail-field"><span>{label}</span><div><strong className="font-mono">{value}</strong><Button variant="ghost" size="icon" onClick={copy} aria-label={`Copy ${label}`}>{copied ? <Check className="text-success" /> : <Copy />}</Button></div></div>;
 }
 
-function IncidentDrawer({ incident, open, onOpenChange, onStatusChange }: { incident?: Incident; open: boolean; onOpenChange: (open: boolean) => void; onStatusChange: (status: IncidentStatus) => void }) {
+function IncidentDrawer({ incident, open, onOpenChange, onStatusChange }: { incident: Incident | undefined; open: boolean; onOpenChange: (open: boolean) => void; onStatusChange: (status: IncidentStatus) => void }) {
   if (!incident) return null;
   const Icon = typeIcon[incident.type];
   const next = nextStatus[incident.status];
@@ -453,8 +451,14 @@ export function JeevanDashboard() {
   const updateStatus = (status: IncidentStatus) => {
     if (!selectedId) return;
     setIncidents((current) => current.map((incident) => incident.id === selectedId ? { ...incident, status } : incident));
-    const selectedIncident = incidents.find((incident) => incident.id === selectedId);
-    setActivity((current) => [{ id: `${selectedId}-${status}-${Date.now()}`, time: "Now", title: `${status === "RESOLVED" ? "Incident resolved" : `Status changed to ${status}`}`, detail: selectedIncident?.id, tone: status === "RESOLVED" ? "success" : status === "RESPONDING" ? "warning" : "neutral" }, ...current].slice(0, 7));
+    const item: ActivityItem = {
+      id: `${selectedId}-${status}-${Date.now()}`,
+      time: "Now",
+      title: status === "RESOLVED" ? "Incident resolved" : `Status changed to ${status}`,
+      detail: selectedId,
+      tone: status === "RESOLVED" ? "success" : status === "RESPONDING" ? "warning" : "neutral",
+    };
+    setActivity((current) => [item, ...current].slice(0, 7));
   };
   const chooseView = (next: View) => { setView(next); setMobileNavOpen(false); };
 
